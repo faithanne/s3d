@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.2//EN" "http://www.web3d.org/specifications/x3d-3.2.dtd">
+<X3D profile='Immersive' version='3.2' xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation='http://www.web3d.org/specifications/x3d-3.2.xsd'>
+ 
+<head>
+    <meta content='S3D.x3d' name='title'/>
+	<meta content='fa and andy' name='creator'/>
+</head>
+<Scene>
+
+<!--Background Color / Angle-->	
+<Background skyAngle='1.60' skyColor='0.576 0.937 0.984, 1 1 1'/>
+
+<!--Train Animation Timer-->
+<TimeSensor DEF='moveInterval' cycleInterval='12'/>
+
+<!--Navigation Types, Avatar Size-->
+<NavigationInfo avatarSize='.5 1 .5' type='"WALK" "EXAMINE" "ANY" "LOOKAT"' transitionType='ANIMATE'/>
+
+<!--LOD so nothing is drawn beyond 150m-->
+<LOD DEF='GALOD' range='150'>
+<Group>
+
+<!--GA Map-->
+<Transform translation='0 -.5 0'>
+	<Shape DEF='map'>
+		<Box size='79.2 1 61.2'/>
+		<Appearance>
+			<ImageTexture url='"images/georgia-topographic-map.gif"'/>
+		</Appearance>
+	</Shape>
+</Transform>
+
+<!--Default / Overhead Viewpoint-->
+<Viewpoint DEF='overhead' description='Georgia Overhead' position='0 50 35' orientation='1 0 0 -1'/>
+
+<!--GA Map Proximity Sensor-->
+<ProximitySensor DEF='inGA' size='100 100 100'/>
+
+<!--Navigation Menu-->
+<Transform DEF='nav'>
+	<Transform translation='.6 .2 -1' scale='.06 .06 .06'>
+		<Transform rotation='0 1 0 -.01'>
+			<Group DEF='compass'>
+				<!--Compass Picture-->
+				<Shape>
+					<Box size='6.5 6.5 .005'/>
+					<Appearance>
+						<ImageTexture url='"images/NavGa.png"'/>
+					</Appearance>
+				</Shape>
+
+				<!--Overhead View Anchor-->
+				<Anchor DEF='overheadAnchor' description='Click for Overhead View' url='"#overhead"'>
+					<Transform translation='-1.9 1.45 0'>
+						<Shape>
+							<Box size='1.9 1.5 .05'/>
+							<Appearance DEF='transparency'>
+								<Material transparency='1'/>
+							</Appearance>
+						</Shape>
+					</Transform>
+				</Anchor>
+
+				<!--Moving Camera Anchor-->
+				<Anchor DEF='movingAnchor' description='Click for Moving Camera View' url='"#movingCamera"'>
+					<Transform translation='1.9 1.45 .05'>
+						<Shape>
+							<Box size='1.9 1.5 .05'/>
+							<Appearance USE='transparency'/>
+						</Shape>
+					</Transform>
+				</Anchor>
+
+				<!--Engine Level View Anchor-->
+				<Anchor DEF='engineAnchor' description='Click for Engine Level View' url='"#engineView"'>
+					<Transform translation='-1.9 -1.95 0'>
+						<Shape>
+							<Box size='1.9 1.5 .05'/>
+							<Appearance USE='transparency'/>
+						</Shape>
+					</Transform>
+				</Anchor>
+
+				<!--Ground Level View Anchor-->
+				<Anchor DEF='groundAnchor' description='Click for Ground Level View' url='"#groundlevel"'>
+					<Transform translation='1.7 -1.95 .05'>
+						<Shape>
+							<Box size='1.9 1.5 .05'/>
+							<Appearance USE='transparency'/>
+						</Shape>
+					</Transform>
+				</Anchor>
+
+				<!--Savannah Map View Anchor-->
+				<Anchor DEF='stationAnchor' description='Click for Savannah View' url='"#overheadSavh"'>
+					<Transform translation='0 1.45 .05'>
+						<Shape>
+							<Box size='1.9 1.5 .05'/>
+							<Appearance USE='transparency'/>
+						</Shape>
+					</Transform>
+				</Anchor>
+
+				<!--Reset Anchor (re)loads the train scene-->
+				<Anchor DEF='resetAnchor' description='Click to Reset' url='"S3D.x3d"'>
+					<Transform translation='-.142 -2.69 0'>
+						<Shape>
+							<Box size='1.05 .50 .05'/>
+							<Appearance USE='transparency'/>
+						</Shape>
+					</Transform>
+				</Anchor>
+				<!--Play Button TouchSensor-->
+				<Transform translation='-.15 -.18 0'>
+					<Shape>
+						<Box size='1.5 .75 .1'/>
+						<Appearance USE='transparency'/>
+					</Shape>
+					<!--Train Animation Trigger-->	
+					<TouchSensor DEF='trigger2' description='All Aboard!'/>
+					<!--ROUTE: Train Animation Trigger to TimeSensor-->	
+					<ROUTE fromNode='trigger2' fromField='touchTime' toNode='moveInterval' toField='startTime'/>	
+				</Transform>
+			</Group>	
+		</Transform>
+	</Transform>
+</Transform>
+
+<!--ROUTEs connecting Nav Menu to GA Proximity Sensor-->
+<ROUTE fromField='orientation_changed' fromNode='inGA' toField='rotation' toNode='nav'/>
+<ROUTE fromField='position_changed' fromNode='inGA' toField='translation' toNode='nav'/>
+
+<!--Orientation Interpolator for Ground Level Camera Rotation-->
+<OrientationInterpolator DEF='turnGC' key='0 .3 1' keyValue='0 0 0 0, 0 1 0 2.5, 0 1 0 3.14159'/>
+<!--ROUTE: TimeSensor to the Orientation Interpolator for the Ground Level Camera-->
+<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='turnGC' toField='set_fraction'/>
+<!--Transform for Ground Level Camera Animation-->
+<Transform DEF='turningGC' center='-10 2 -12'>
+	<!--ROUTE: Orientation Interpolator for the Ground Level Camera to Transform for the Animation-->
+	<ROUTE fromNode='turnGC' fromField='value_changed' toNode='turningGC' toField='rotation'/>
+		
+	<!--Ground Level Viewpoint-->
+	<Viewpoint DEF='groundlevel' description='Georgia Ground Level' position='-10 2 -12' orientation='0 1 0 1'/>
+</Transform>
+
+<!--Train (engine plus car)-->
+<Transform scale='.05 .05 .05' translation='-20 0 -14.5' rotation='0 1 0 -.9' >
+			
+	<!--PositionInterpolator for the Train-->
+	<PositionInterpolator DEF='move' key='0 .15 .3 .6 .8 1' keyValue='0 0 0, 200 0 -10, 360 0 -40, 615 0 -260, 780 0 -410, 960 0 -550'/>
+	<!--ROUTE: TimeSensor to the Position Interpolator for the Train-->
+	<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='move' toField='set_fraction'/>
+	<!--Transform for the Position Interpolator of Train-->
+	<Transform DEF='trainMove' center='35 0 0'>
+		<!--ROUTE: Position Interpolator to the Transform for the Movement of the Train-->
+		<ROUTE fromNode='move' fromField='value_changed' toNode='trainMove' toField='set_translation'/>
+				
+		<!--Orientation Interpoolator for Engine-->
+		<OrientationInterpolator DEF='turn' key='0 .15 .3 .4 1' keyValue='0 0 0 0, 0 1 0 .2, 0 1 0 .35, 0 1 0 .75, 0 1 0 .7'/>
+		<!--ROUTE: TimeSensor to the Orientation Interpolator for Engine-->
+		<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='turn' toField='set_fraction'/>
+		<!--Transform for Rotation of Engine, Centering at the Engine Nose-->
+		<Transform DEF ='trainTurn' center='50 0 0'>
+			<!--ROUTE: Orientation Interpolator for Engine to the Transform Centering Rotations at the Nose-->
+			<ROUTE fromNode='turn' fromField='value_changed' toNode='trainTurn' toField='rotation'/>
+			
+			<!--Engine Inline node-->
+			<Inline DEF='engine' url='"Engine.x3d"'/>
+				
+			<!--Engine Viewpoint-->
+			<Viewpoint DEF='engineView' description='Georgia Engine Level' position='40 15 0' orientation='0 1 0 -1.57'/>
+				
+			<!--Transform Setting Initial Position of car1, Keeps a Fixed Distance from Engine-->
+			<Transform translation='-105 8.5 0' center='56 0 0' rotation='0 1 0 .2'>
+					
+				<!--Orientation Interpolator of car1-->
+				<OrientationInterpolator DEF='turn1' key='0 .12 .25 .4 .45 .6 .8 1' keyValue='0 0 0 0, 0 1 0 -.35, 0 1 0 -.45, 0 1 0 -.5, 0 1 0 -.4, 0 1 0 -.2, 0 1 0 -.15, 0 1 0 -.3'/>
+				<!--ROUTE: TimeSensor to the Orientation Interpolator for car1-->
+				<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='turn1' toField='set_fraction'/>
+				<!--Transform for Rotation of car1, Centering All Rotations at the Front of car1-->
+				<Transform DEF='car1Turn' center='56 0 0'>
+					<!--ROUTE: Orientation Interpolator to the Transform Controlling the Rotation of car1-->
+					<ROUTE fromNode='turn1' fromField='value_changed' toNode='car1Turn' toField='rotation'/>
+					<Inline DEF='car' url='"Car.x3d"'/>
+					
+					<!--Orientation Interpolator for car2-->
+					<OrientationInterpolator DEF='turn2' key='0 .1 .15 .25 .4 .65 1' keyValue='0 1 0 -.25, 0 1 0 0, 0 1 0 -.1, 0 1 0 0, 0 1 0 -.3, 0 1 0 0, 0 1 0 .1'/>
+					<!--ROUTE: TimeSensor to the Orientation Interpolator for car2-->
+					<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='turn2' toField='set_fraction'/>
+					<!--Transform for Rotation of car2, Centering All Rotation at the Front of car2-->
+					<Transform  DEF='car2Turn' translation='-100 0 0' center='56 0 0' rotation='0 1 0 -.25'>
+						<!--ROUTE: Orientation Interpolator to the Transform Controlling the Rotation of car2-->
+						<ROUTE fromNode='turn2' fromField='value_changed' toNode='car2Turn' toField='rotation'/>
+						<Inline USE='car'/>
+					</Transform>
+							
+				</Transform>
+			</Transform>
+		</Transform>
+				
+		<!--Animation Trigger-->	
+		<TouchSensor DEF='trigger' description='All Aboard!'/>
+		<!--ROUTE: Trigger to TimeSensor-->	
+		<ROUTE fromNode='trigger' fromField='touchTime' toNode='moveInterval' toField='startTime'/>
+	</Transform>	
+</Transform>
+
+<!--Position Interpolator for Moving Camera-->
+<PositionInterpolator DEF='vM' key='0 1' keyValue='0 0 0, 20 0 -10'/>
+<!--ROUTE: TimeSensor to the Position Interpolator for the Moving Camera-->
+<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='vM' toField='set_fraction'/>
+<!--Transform for Moving Camera Position Interpolator-->
+<Transform DEF='viewMove'>
+	<!--ROUTE: Position Interpolator to Transform Containing the Moving Camera-->
+	<ROUTE fromNode='vM' fromField='value_changed' toNode='viewMove' toField='set_translation'/>
+
+	<!--Orientation Interpolator for Moving Camera-->
+	<OrientationInterpolator DEF='vT' key='0 1' keyValue='0 0 0 0, 0 1 0 2.8'/>
+	<!--ROUTE: TimeSensor to the Orientation Interpolator for Moving Camera-->
+	<ROUTE fromNode='moveInterval' fromField='fraction_changed' toNode='vT' toField='set_fraction'/>
+	<!--Transform for Camera Rotation-->
+	<Transform DEF='viewTurn'>
+		<!--ROUTE: Orientation Interpolator to Transform Contains the Moving Camera-->
+		<ROUTE fromNode='vT' fromField='value_changed' toNode='viewTurn' toField='rotation'/>
+				
+		<!--Moving Camera Initial Position-->
+		<Transform translation='-20 2 4.5' rotation='0 1 0 -.5'>
+			<!--"Comment IN" this shape to visualize the position of the camera-->
+			<!--<Shape>
+				<Box size='1 1 1'/>
+				<Appearance>
+					<Material diffuseColor='1 0 0'/>
+				</Appearance>
+			</Shape>-->	
+			<!--Moving Camera Viewpoint-->
+			<Viewpoint DEF='movingCamera' description='Moving Camera Viewpoint' position='0 0 0'/>
+		</Transform>
+	</Transform>
+</Transform>	
+
+<!--Spotlight animation for the train-->
+			
+<!--<SpotLight DEF='Lamp' beamWidth='.70' color='1 1 0' location='0 0 12' radius='36' global='true'/>-->
+<SpotLight DEF='Lamp' beamWidth='.70' color='1 1 0' direction='0 0 -1' location='0 3 12' radius='18' intensity='1.0' cutOffAngle='5'/>
+
+<!--Color Interpolator for SpotLight Color-->
+<ColorInterpolator DEF='LightColor' key='0 .125 .375 .5 .625 .875 1' keyValue='1 1 0, 1 1 0, 1 1 1, 1 1 1, 1 1 1, 1 1 0, 1 1 0'/>
+<!--ROUTE: Color Interpolator to SpotLight-->
+<ROUTE fromField='value_changed' fromNode='LightColor' toField='color' toNode='Lamp'/>
+<!--TimeSensor for SpotLight animation-->
+<TimeSensor DEF='Timer' cycleInterval='12' enabled='true' loop='true'/>
+<!--ROUTE: TimeSensor to the Color Interpolator for SpotLight-->
+<ROUTE fromField='fraction_changed' fromNode='Timer' toField='set_fraction' toNode='LightColor'/>
+
+</Group>
+<Group />
+</LOD>	
+
+<!--Savannah Inline-->
+<Transform translation='0 -500 0'>
+	<Inline DEF='savannah' url='"Savannah.x3d"'/>
+</Transform>
+
+
+</Scene>
+</X3D>
